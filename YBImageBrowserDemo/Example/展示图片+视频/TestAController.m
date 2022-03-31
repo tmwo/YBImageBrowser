@@ -80,7 +80,7 @@
     browser.dataSourceArray = datas;
     browser.currentPage = index;
     // 只有一个保存操作的时候，可以直接右上角显示保存按钮
-    browser.defaultToolViewHandler.topView.operationType = YBIBTopViewOperationTypeSave;
+//    browser.defaultToolViewHandler.topView.operationType = YBIBTopViewOperationTypeSave;
     [browser show];
 }
 

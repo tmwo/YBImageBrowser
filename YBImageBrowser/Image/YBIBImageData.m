@@ -631,6 +631,16 @@ static dispatch_queue_t YBIBImageProcessingQueue(void) {
     }];
 }
 
+- (void)yb_copyLink {
+    if (self.imageURL) {
+        UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+        [pasteboard setString:self.imageURL.absoluteString];
+        [self.yb_auxiliaryViewHandler() yb_showCorrectToastWithContainer:self.yb_containerView text:[YBIBCopywriter sharedCopywriter].linkCopySuccess];
+    }else {
+        [self.yb_auxiliaryViewHandler() yb_showIncorrectToastWithContainer:self.yb_containerView text:[YBIBCopywriter sharedCopywriter].linkCopyFail];
+    }
+}
+
 #pragma mark - getters & setters
 
 @synthesize delegate = _delegate;

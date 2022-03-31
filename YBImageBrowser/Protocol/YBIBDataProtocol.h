@@ -54,6 +54,9 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)yb_saveToPhotoAlbum;
 
+/// 复制链接
+- (void)yb_copyLink;
+
 /**
  是否允许保存到相册
  */

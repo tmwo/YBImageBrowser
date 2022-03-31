@@ -9,10 +9,12 @@
 #import "YBIBToolViewHandler.h"
 #import "YBIBCopywriter.h"
 #import "YBIBUtilities.h"
+#import "YBIBIconManager.h"
 
 @interface YBIBToolViewHandler ()
 @property (nonatomic, strong) YBIBSheetView *sheetView;
 @property (nonatomic, strong) YBIBSheetAction *saveAction;
+@property (nonatomic, strong) YBIBSheetAction *copyAction;
 @property (nonatomic, strong) YBIBTopView *topView;
 @end
 
@@ -79,6 +81,10 @@
         if (![self.sheetView.actions containsObject:self.saveAction]) {
             [self.sheetView.actions addObject:self.saveAction];
         }
+
+        if (![self.sheetView.actions containsObject:self.copyAction]) {
+            [self.sheetView.actions addObject:self.copyAction];
+        }
     }
     [self.sheetView showToView:self.yb_containerView orientation:self.yb_currentOrientation()];
 }
@@ -101,7 +107,7 @@
 - (YBIBSheetAction *)saveAction {
     if (!_saveAction) {
         __weak typeof(self) wSelf = self;
-        _saveAction = [YBIBSheetAction actionWithName:[YBIBCopywriter sharedCopywriter].saveToPhotoAlbum action:^(id<YBIBDataProtocol> data) {
+        _saveAction = [YBIBSheetAction actionWithName:[YBIBCopywriter sharedCopywriter].saveToPhotoAlbum icon:[YBIBIconManager sharedManager].moreSaveImage() action:^(id<YBIBDataProtocol> data) {
             __strong typeof(wSelf) self = wSelf;
             if (!self) return;
             if ([data respondsToSelector:@selector(yb_saveToPhotoAlbum)]) {
@@ -113,6 +119,20 @@
     return _saveAction;
 }
 
+- (YBIBSheetAction *)copyAction {
+    if (!_copyAction) {
+        __weak typeof(self) wSelf = self;
+        _copyAction = [YBIBSheetAction actionWithName:[YBIBCopywriter sharedCopywriter].linkCopy icon:[YBIBIconManager sharedManager].moreCopyLinkImage() action:^(id<YBIBDataProtocol> data) {
+            __strong typeof(wSelf) self = wSelf;
+            if (!self) return;
+            if ([data respondsToSelector:@selector(yb_copyLink)]) {
+                [data yb_copyLink];
+            }
+            [self.sheetView hideWithAnimation:YES];
+        }];
+    }
+    return _copyAction;
+}
 - (YBIBTopView *)topView {
     if (!_topView) {
         _topView = [YBIBTopView new];

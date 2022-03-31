@@ -19,10 +19,12 @@ typedef void(^YBIBSheetActionBlock)(id<YBIBDataProtocol> data);
 /// 显示的名字
 @property (nonatomic, copy) NSString *name;
 
+@property (nonatomic, strong) UIImage *icon;
+
 /// 点击回调闭包
 @property (nonatomic, copy, nullable) YBIBSheetActionBlock action;
 
-+ (instancetype)actionWithName:(NSString *)name action:(_Nullable YBIBSheetActionBlock)action;
++ (instancetype)actionWithName:(NSString *)name icon:(UIImage *)icon action:(_Nullable YBIBSheetActionBlock)action;
 
 @end
 
@@ -31,21 +33,6 @@ typedef void(^YBIBSheetActionBlock)(id<YBIBDataProtocol> data);
 
 /// 数据源 (可自定义添加)
 @property (nonatomic, strong) NSMutableArray<YBIBSheetAction *> *actions;
-
-/// 列表 Cell 的高度
-@property (nonatomic, assign) CGFloat cellHeight;
-
-/// 列表最大高度与容器高度的比例
-@property (nonatomic, assign) CGFloat maxHeightScale;
-
-/// 取消的文本
-@property (nonatomic, copy) NSString *cancelText;
-
-/// 显示动画持续时间
-@property (nonatomic, assign) NSTimeInterval showDuration;
-
-/// 隐藏动画持续时间
-@property (nonatomic, assign) NSTimeInterval hideDuration;
 
 /// 背景透明度
 @property (nonatomic, assign) CGFloat backAlpha;

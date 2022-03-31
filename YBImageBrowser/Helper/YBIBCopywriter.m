@@ -52,7 +52,11 @@
     self.saveToPhotoAlbumSuccess = en ? @"Save successful" : @"已保存到系统相册";
     self.saveToPhotoAlbumFailed = en ? @"Save failed" : @"保存失败";
     self.saveToPhotoAlbum = en ? @"Save" : @"保存到相册";
+    self.linkCopy = en ? @"Copy Link" : @"复制链接";
+    self.linkCopySuccess = en ? @"Copied" : @"已复制到粘贴板";
+    self.linkCopyFail = en ? @"Copy Failed" : @"复制错误";
     self.cancel = en ? @"Cancel" : @"取消";
+    self.more = en ? @"More" : @"更多";
 }
 
 #pragma mark - public

@@ -50,7 +50,15 @@ typedef NS_ENUM(NSInteger, YBIBCopywriterType) {
 
 @property (nonatomic, copy) NSString *saveToPhotoAlbum;
 
+@property (nonatomic, copy) NSString *linkCopy;
+
+@property (nonatomic, copy) NSString *linkCopySuccess;
+
+@property (nonatomic, copy) NSString *linkCopyFail;
+
 @property (nonatomic, copy) NSString *cancel;
+
+@property (nonatomic, copy) NSString *more;
 
 @end
 

@@ -12,54 +12,59 @@
 
 
 @implementation YBIBSheetAction
-+ (instancetype)actionWithName:(NSString *)name action:(YBIBSheetActionBlock)action {
++ (instancetype)actionWithName:(NSString *)name icon:(UIImage *)icon action:(YBIBSheetActionBlock)action {
     YBIBSheetAction *sheetAction = [YBIBSheetAction new];
     sheetAction.name = name;
+    sheetAction.icon = icon;
     sheetAction.action = action;
     return sheetAction;
 }
 @end
 
 
-@interface YBIBSheetCell : UITableViewCell
+@interface YBIBSheetCell : UICollectionViewCell
+@property (nonatomic, strong) UIImageView *iconView;
 @property (nonatomic, strong) UILabel *titleLabel;
-@property (nonatomic, strong) CALayer *line;
 @end
 @implementation YBIBSheetCell
-- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
-    if (self = [super initWithStyle:style reuseIdentifier:reuseIdentifier]) {
-        self.selectionStyle = UITableViewCellSelectionStyleNone;
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    if (self = [super initWithFrame:frame]) {
         _titleLabel = [UILabel new];
-        _titleLabel.textColor = UIColor.darkTextColor;
-        _titleLabel.font = [UIFont fontWithName:@"Avenir-Medium" size:16];
+        _titleLabel.textColor = [UIColor colorWithRed:145/255.0 green:145/255.0 blue:176/255.0 alpha:1];
+        _titleLabel.font = [UIFont systemFontOfSize:10];
         _titleLabel.textAlignment = NSTextAlignmentCenter;
-        _line = [CALayer new];
-        _line.backgroundColor = UIColor.groupTableViewBackgroundColor.CGColor;
+        _iconView = [[UIImageView alloc] init];
         [self.contentView addSubview:_titleLabel];
-        [self.contentView.layer addSublayer:_line];
+        [self.contentView addSubview:_iconView];
     }
     return self;
 }
 - (void)layoutSubviews {
     [super layoutSubviews];
-    CGFloat width = self.contentView.bounds.size.width, height = self.contentView.bounds.size.height;
-    CGFloat lineHeight = 0.5;
-    _line.frame = CGRectMake(0, height - lineHeight, width, lineHeight);
-    CGFloat offset = 15;
-    _titleLabel.frame = CGRectMake(offset, 0, width - offset * 2, height);
+    CGFloat width = self.contentView.bounds.size.width;
+    _iconView.frame = CGRectMake(((width - 46) / 2), 0, 46, 46);
+    _titleLabel.frame = CGRectMake(0, 54, width, 16);
 }
 @end
 
 
-static CGFloat kOffsetSpace = 5;
+static CGFloat kTopOffsetSpace = 78;
+static CGFloat kBottomOffsetSpace = 32;
 
-@interface YBIBSheetView () <UITableViewDelegate, UITableViewDataSource>
-@property (nonatomic, strong) UITableView *tableView;
+@interface YBIBSheetView () <UICollectionViewDelegate, UICollectionViewDataSource>
+@property (nonatomic, strong) UIView *containerView;
+@property (nonatomic, strong) UIView *lineView;
+@property (nonatomic, strong) UILabel *titleLabel;
+@property (nonatomic, strong) UICollectionView *collectionView;
 @end
 
 @implementation YBIBSheetView {
+    CGFloat _cellWidth;
     CGRect _tableShowFrame;
     CGRect _tableHideFrame;
+    NSTimeInterval _showDuration;
+    NSTimeInterval _hideDuration;
 }
 
 #pragma mark - life cycle
@@ -67,15 +72,14 @@ static CGFloat kOffsetSpace = 5;
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        _cancelText = [YBIBCopywriter sharedCopywriter].cancel;
-        _maxHeightScale = 0.7;
         _showDuration = 0.2;
         _hideDuration = 0.1;
-        _cellHeight = 50;
-        _backAlpha = 0.3;
+        _backAlpha = 0.55;
         _actions = [NSMutableArray array];
-        
-        [self addSubview:self.tableView];
+        [self addSubview:self.containerView];
+        [self.containerView addSubview:self.lineView];
+        [self.containerView addSubview:self.titleLabel];
+        [self.containerView addSubview:self.collectionView];
     }
     return self;
 }
@@ -87,40 +91,48 @@ static CGFloat kOffsetSpace = 5;
     
     [view addSubview:self];
     self.frame = view.bounds;
-    
-    UIEdgeInsets padding = YBIBPaddingByBrowserOrientation(orientation);
-    
-    CGFloat footerHeight = padding.bottom;
-    CGFloat tableHeight = self.cellHeight * (self.actions.count + 1) + kOffsetSpace + footerHeight;
+    CGFloat viewWidth = self.bounds.size.width;
+    CGFloat viewHeight = self.bounds.size.height;
+    CGFloat tableHeight = kTopOffsetSpace + 68 * (self.actions.count/4 + 1) + kBottomOffsetSpace + YBIBSafeAreaBottomHeight();
     
     _tableShowFrame = self.frame;
-    _tableShowFrame.size.height = MIN(self.maxHeightScale * self.bounds.size.height, tableHeight);
-    _tableShowFrame.origin.y = self.bounds.size.height - _tableShowFrame.size.height;
+    _tableShowFrame.size.height = MIN(0.7 * viewHeight, tableHeight);
+    _tableShowFrame.origin.y = viewHeight - _tableShowFrame.size.height;
     
     _tableHideFrame = _tableShowFrame;
-    _tableHideFrame.origin.y = self.bounds.size.height;
+    _tableHideFrame.origin.y = viewHeight;
     
     self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0];
-    self.tableView.frame = _tableHideFrame;
-    self.tableView.tableFooterView.bounds = CGRectMake(0, 0, self.tableView.frame.size.width, footerHeight);
-    [UIView animateWithDuration:self.showDuration animations:^{
+    self.containerView.frame = _tableHideFrame;
+
+    self.lineView.frame = CGRectMake((viewWidth - 32) / 2, 12, 32, 4);
+    self.titleLabel.frame = CGRectMake(0, 32, viewWidth, 22);
+    self.collectionView.frame = CGRectMake(0, kTopOffsetSpace, self.bounds.size.width, 68 * (self.actions.count/4 + 1));
+
+    [UIView animateWithDuration:_showDuration animations:^{
         self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:self->_backAlpha];
-        self.tableView.frame = self->_tableShowFrame;
+        self.containerView.frame = self->_tableShowFrame;
     }];
+
+    UIBezierPath *maskPath = [UIBezierPath bezierPathWithRoundedRect:self.containerView.bounds byRoundingCorners:UIRectCornerTopLeft | UIRectCornerTopRight cornerRadii:CGSizeMake(12, 12)];
+    CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
+    maskLayer.frame = self.containerView.bounds;
+    maskLayer.path = maskPath.CGPath;
+    self.containerView.layer.mask = maskLayer;
 }
 
 - (void)hideWithAnimation:(BOOL)animation {
     if (!self.superview) return;
     
     void(^animationsBlock)(void) = ^{
-        self.tableView.frame = self->_tableHideFrame;
+        self.containerView.frame = self->_tableHideFrame;
         self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0];
     };
     void(^completionBlock)(BOOL n) = ^(BOOL n){
         [self removeFromSuperview];
     };
     if (animation) {
-        [UIView animateWithDuration:self.hideDuration animations:animationsBlock completion:completionBlock];
+        [UIView animateWithDuration:_hideDuration animations:animationsBlock completion:completionBlock];
     } else {
         animationsBlock();
         completionBlock(NO);
@@ -131,79 +143,81 @@ static CGFloat kOffsetSpace = 5;
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     CGPoint point = [touches.anyObject locationInView:self];
-    if (!CGRectContainsPoint(self.tableView.frame, point)) {
+    if (!CGRectContainsPoint(self.containerView.frame, point)) {
         [self hideWithAnimation:YES];
     }
 }
 
-#pragma mark - <UITableViewDataSource>
-
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 2;
+#pragma mark - collectionView deleDate
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+    return self.actions.count;
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return section == 0 ? self.actions.count : 1;
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    return CGSizeMake(self.bounds.size.width / MIN(4, self.actions.count), 68);
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return self.cellHeight;
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return section == 0 ? CGFLOAT_MIN : kOffsetSpace;
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
-    return CGFLOAT_MIN;
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    YBIBSheetCell *cell = [tableView dequeueReusableCellWithIdentifier:NSStringFromClass(YBIBSheetCell.self)];
-    if (indexPath.section == 0) {
-        cell.line.hidden = NO;
-        YBIBSheetAction *action = self.actions[indexPath.row];
-        cell.titleLabel.text = action.name;
-    } else {
-        cell.line.hidden = YES;
-        cell.titleLabel.text = self.cancelText;
-    }
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    YBIBSheetCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass(YBIBSheetCell.class) forIndexPath:indexPath];
+    YBIBSheetAction *action = self.actions[indexPath.item];
+    [cell.titleLabel setText:action.name];
+    [cell.iconView setImage:action.icon];
     return cell;
 }
 
-#pragma mark - <UITableViewDelegate>
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath.section == 0) {
-        YBIBSheetAction *action = self.actions[indexPath.row];
-        if (action.action) action.action(self.currentdata());
-    } else {
-        [self hideWithAnimation:YES];
-    }
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    YBIBSheetAction *action = self.actions[indexPath.item];
+    if (action.action) action.action(self.currentdata());
 }
 
 #pragma mark - getters
-
-- (UITableView *)tableView {
-    if (!_tableView) {
-        _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
-        _tableView.delegate = self;
-        _tableView.dataSource = self;
-        _tableView.estimatedRowHeight = 44;
-        _tableView.estimatedSectionFooterHeight = 0;
-        _tableView.estimatedSectionHeaderHeight = 0;
-        _tableView.backgroundColor = [UIColor clearColor];
-        _tableView.alwaysBounceVertical = NO;
-        _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-        if (@available(iOS 11.0, *)) {
-            _tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-        }
-        UIView *footer = [UIView new];
-        footer.backgroundColor = UIColor.whiteColor;
-        _tableView.tableFooterView = footer;
-        [_tableView registerClass:YBIBSheetCell.self forCellReuseIdentifier:NSStringFromClass(YBIBSheetCell.self)];
+- (UICollectionView *)collectionView {
+    if (!_collectionView) {
+        UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
+        layout.minimumLineSpacing = 0;
+        layout.minimumInteritemSpacing = 0;
+        layout.sectionInset = UIEdgeInsetsMake(0, 0, 0, 0);
+        UICollectionView *cv = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
+        cv.alwaysBounceVertical = NO;
+        cv.scrollEnabled = NO;
+        cv.showsHorizontalScrollIndicator = NO;
+        cv.backgroundColor = [UIColor clearColor];
+        cv.delegate = self;
+        cv.dataSource = self;
+        [cv registerClass:YBIBSheetCell.class forCellWithReuseIdentifier:NSStringFromClass(YBIBSheetCell.class)];
+        _collectionView = cv;
     }
-    return _tableView;
+    return _collectionView;
 }
 
+- (UIView *)containerView {
+    if (!_containerView) {
+        _containerView = [[UIView alloc] initWithFrame:CGRectZero];
+        [_containerView setBackgroundColor:[UIColor colorWithRed:37/255.0 green:38/255.0 blue:61/255.0 alpha:1.0]];
+    }
+    return _containerView;
+}
+
+- (UIView *)lineView {
+    if (!_lineView) {
+        UIView *view = [[UIView alloc] init];
+        view.backgroundColor = [UIColor colorWithRed:52/255.0 green:53/255.0 blue:82/255.0 alpha:1.0];
+        view.layer.cornerRadius = 2;
+        view.layer.masksToBounds = YES;
+        _lineView = view;
+    }
+    return _lineView;
+}
+
+- (UILabel *)titleLabel {
+    if (!_titleLabel) {
+        UILabel *label = [[UILabel alloc] init];
+        label.textAlignment = NSTextAlignmentCenter;
+        label.textColor = [UIColor whiteColor];
+        label.font = [UIFont systemFontOfSize:16];
+        label.text = [YBIBCopywriter sharedCopywriter].more;
+        _titleLabel = label;
+    }
+    return _titleLabel;
+}
 @end

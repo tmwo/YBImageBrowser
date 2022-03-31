@@ -191,6 +191,20 @@ extern CGImageRef YYCGImageCreateDecodedCopy(CGImageRef imageRef, BOOL decodeFor
     }
 }
 
+- (void)yb_copyLink {
+    if (self.videoAVAsset && [self.videoAVAsset isKindOfClass:AVURLAsset.class]) {
+        AVURLAsset *asset = (AVURLAsset *)self.videoAVAsset;
+        NSURL *URL = asset.URL;
+        if ([URL.scheme containsString:@"http"]) {
+            UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+            [pasteboard setString:URL.absoluteString];
+            [self.yb_auxiliaryViewHandler() yb_showCorrectToastWithContainer:self.yb_containerView text:[YBIBCopywriter sharedCopywriter].linkCopySuccess];
+            return;
+        }
+    }
+    [self.yb_auxiliaryViewHandler() yb_showIncorrectToastWithContainer:self.yb_containerView text:[YBIBCopywriter sharedCopywriter].linkCopyFail];
+}
+
 #pragma mark - private
 
 - (void)UISaveVideoAtPathToSavedPhotosAlbum_videoPath:(NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo{

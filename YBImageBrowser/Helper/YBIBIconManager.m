@@ -115,6 +115,12 @@ NSBundle *YBIBVideoBundle(void) {
         _toolMoreImage = ^UIImage * _Nullable{
             return [UIImage ybib_imageNamed:@"ybib_more" bundle:YBIBDefaultBundle()];
         };
+        _moreSaveImage = ^UIImage * _Nullable{
+            return [UIImage ybib_imageNamed:@"ybib_save_img" bundle:YBIBDefaultBundle()];
+        };
+        _moreCopyLinkImage = ^UIImage * _Nullable{
+            return [UIImage ybib_imageNamed:@"ybib_copy_link" bundle:YBIBDefaultBundle()];
+        };
         
         _videoPlayImage = ^UIImage * _Nullable{
             return [UIImage ybib_imageNamed:@"ybib_play" bundle:YBIBVideoBundle()];
