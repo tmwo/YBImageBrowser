@@ -52,11 +52,12 @@
 static CGFloat kTopOffsetSpace = 78;
 static CGFloat kBottomOffsetSpace = 32;
 
-@interface YBIBSheetView () <UICollectionViewDelegate, UICollectionViewDataSource>
+@interface YBIBSheetView () <UICollectionViewDelegate, UICollectionViewDataSource, UIGestureRecognizerDelegate>
 @property (nonatomic, strong) UIView *containerView;
 @property (nonatomic, strong) UIView *lineView;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UICollectionView *collectionView;
+@property (nonatomic, strong) UIPanGestureRecognizer *panGesture;
 @end
 
 @implementation YBIBSheetView {
@@ -77,6 +78,7 @@ static CGFloat kBottomOffsetSpace = 32;
         _backAlpha = 0.55;
         _actions = [NSMutableArray array];
         [self addSubview:self.containerView];
+        [self addGestureRecognizer:self.panGesture];
         [self.containerView addSubview:self.lineView];
         [self.containerView addSubview:self.titleLabel];
         [self.containerView addSubview:self.collectionView];
@@ -138,7 +140,46 @@ static CGFloat kBottomOffsetSpace = 32;
         completionBlock(NO);
     }
 }
+#pragma mark -
+#pragma mark - UIGestureRecognizerDelegate
+static CGFloat lastTransitionY;
+- (void)handlePanGesture:(UIPanGestureRecognizer *)panGesture {
+    CGPoint translation = [panGesture translationInView:self.containerView];
+    // 限制最大的拖动范围
+    CGFloat contentM = (self.frame.size.height - self.containerView.frame.size.height);
+    if (translation.y > 0) { // 向下拖拽
+        CGRect contentFrame = self.containerView.frame;
+        contentFrame.origin.y += translation.y;
+        self.containerView.frame = contentFrame;
 
+    }else if (translation.y < 0 && self.containerView.frame.origin.y > contentM) { // 向上拖拽
+        CGRect contentFrame = self.containerView.frame;
+        contentFrame.origin.y = MAX((self.containerView.frame.origin.y + translation.y), contentM);
+        self.containerView.frame = contentFrame;
+    }
+
+    [panGesture setTranslation:CGPointZero inView:self.containerView];
+    if (panGesture.state == UIGestureRecognizerStateEnded) {
+        CGPoint velocity = [panGesture velocityInView:self.containerView];
+        BOOL offsetY =  self.containerView.frame.origin.y > self.containerView.frame.size.height*0.7l;
+        if ((velocity.y > 0 && lastTransitionY > 5) || offsetY) {// 结束时的速度>0 滑动距离> 5 且UIScrollView滑动到最顶部
+            [self hideWithAnimation:YES];
+        }else {
+            [self show];
+        }
+    }
+    lastTransitionY = translation.y;
+}
+
+- (void)show {
+    [UIView animateWithDuration:0.25f animations:^{
+        self.maskView.alpha = 1;
+        CGRect frame = self.containerView.frame;
+        frame.origin.y = self.frame.size.height - frame.size.height;
+        self.containerView.frame = frame;
+    } completion:^(BOOL finished) {
+    }];
+}
 #pragma mark - touch
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
@@ -219,5 +260,13 @@ static CGFloat kBottomOffsetSpace = 32;
         _titleLabel = label;
     }
     return _titleLabel;
+}
+
+- (UIPanGestureRecognizer *)panGesture {
+    if (!_panGesture) {
+        _panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
+        _panGesture.delegate = self;
+    }
+    return _panGesture;
 }
 @end
