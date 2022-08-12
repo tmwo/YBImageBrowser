@@ -32,7 +32,7 @@
     if (self = [super initWithFrame:frame]) {
         _titleLabel = [UILabel new];
         _titleLabel.textColor = [UIColor colorWithRed:145/255.0 green:145/255.0 blue:176/255.0 alpha:1];
-        _titleLabel.font = [UIFont systemFontOfSize:10];
+        _titleLabel.font = [UIFont systemFontOfSize:11];
         _titleLabel.textAlignment = NSTextAlignmentCenter;
         _iconView = [[UIImageView alloc] init];
         [self.contentView addSubview:_titleLabel];
@@ -255,7 +255,7 @@ static CGFloat lastTransitionY;
         UILabel *label = [[UILabel alloc] init];
         label.textAlignment = NSTextAlignmentCenter;
         label.textColor = [UIColor whiteColor];
-        label.font = [UIFont systemFontOfSize:16];
+        label.font = [UIFont boldSystemFontOfSize:18];
         label.text = [YBIBCopywriter sharedCopywriter].more;
         _titleLabel = label;
     }
